@@ -67,18 +67,19 @@ sequenceDiagram
 
 ## 4. Packet Framing and Authenticated Encryption
 
-Every application payload transmitted across the relay is sealed with **AES-256-GCM** (Galois/Counter Mode).
+Every application payload transmitted across the relay is framed with a 4-byte big-endian length prefix and sealed with **AES-256-GCM** (Galois/Counter Mode).
 
 ### Packet Wire Format
 ```
-+-------------------+------------------------------------------+-----------------------+
-|  Nonce (12 Bytes) |         Ciphertext (Variable Length)      |  Auth Tag (16 Bytes)  |
-+-------------------+------------------------------------------+-----------------------+
++--------------------+-------------------+-------------------------------+---------------------+
+| Length (4B BigEnd) |  Nonce (12 Bytes) |  Ciphertext (Variable Length)  | Auth Tag (16 Bytes) |
++--------------------+-------------------+-------------------------------+---------------------+
 ```
 
-1. **Nonce Generation:** A fresh, cryptographically secure random 96-bit (12-byte) initialization vector is generated for every transmission using the operating system CSPRNG (`os.urandom(12)`).
-2. **GHASH Integrity Tag:** The 128-bit authentication tag guarantees confidentiality and authenticity. Any modification in transit triggers immediate client-side rejection and a tamper warning.
-3. **Replay & Malleability Resistance:** Because nonces are unique and tags are strictly verified prior to plaintext decoding, ciphertext manipulation is detected with overwhelming probability ($1 - 2^{-128}$).
+1. **Length-Prefixed Framing (`>I`):** Guarantees deterministic TCP byte-stream reassembly across high-latency WAN links, preventing packet coalescing and fragmentation desynchronization.
+2. **Nonce Generation:** A fresh, cryptographically secure random 96-bit (12-byte) initialization vector is generated for every transmission using the operating system CSPRNG (`os.urandom(12)`).
+3. **GHASH Integrity Tag:** The 128-bit authentication tag guarantees confidentiality and authenticity. Any modification in transit triggers immediate client-side rejection and a tamper alert without killing the client socket loop.
+4. **Replay & Malleability Resistance:** Because nonces are unique and tags are strictly verified prior to plaintext decoding, ciphertext manipulation is detected with overwhelming probability ($1 - 2^{-128}$).
 
 ---
 

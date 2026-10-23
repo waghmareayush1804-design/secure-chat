@@ -26,3 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed infinite connection retry hang in `crypto_client.py` and added configurable `max_retries` and `close()` method.
 - Fixed Streamlit `st.set_page_config` execution order in `pages/1_Chat_Terminal.py`.
 - Added programmatic `encode_image` and `decode_image` functions in `stegno code.py` for automated testability.
+- Fixed TCP packet coalescing and fragmentation failure by implementing 4-byte big-endian length-prefixed framing and exact TCP stream reassembly (`_recv_exact`) in `crypto_client.py`.
+- Fixed false tamper triggers and socket death on multi-message rapid transmissions and messages exceeding 4KB.
+- Fixed fatal socket termination on network tamper detection; invalid ciphertext now triggers an alert while maintaining session connection.
+- Removed unused imports (`socket` in `bob_agent.py`, `hashlib` in `tests/test_crypto_client.py`) to ensure CI linter (`ruff check .`) passes cleanly.
+- Resolved Pillow 12+ `DeprecationWarning` in `stegno code.py` by introducing `_get_pixel_data()` compatibility shim.
+- Expanded automated test suite from 13 to 16 tests with multi-packet rapid streaming, 64KB payload reassembly, and network tamper resilience tests.

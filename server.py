@@ -8,7 +8,7 @@ import threading
 
 HOST = os.environ.get("RELAY_HOST", "127.0.0.1")
 PORT = int(os.environ.get("RELAY_PORT", "5000"))
-BUFFER_SIZE = 4096
+BUFFER_SIZE = 65536
 MAX_PENDING_PAYLOADS = 100
 
 logging.basicConfig(

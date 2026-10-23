@@ -1,14 +1,13 @@
-"""Unit tests for SecureClient cryptographic operations."""
-
-import hashlib
 import os
 import socket
+import struct
 import threading
 import time
 import unittest
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.asymmetric import mlkem, x25519
+
 from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import mlkem, x25519
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from crypto_client import SecureClient
@@ -166,6 +165,130 @@ class TestCryptoClientNetwork(unittest.TestCase):
         self.assertIn("Hybrid key material mixed", alice_titles)
         self.assertIn("HKDF derived session key", alice_titles)
         self.assertIn("AES-256-GCM encrypted", alice_titles)
+
+        alice.close()
+        bob.close()
+
+    def test_rapid_successive_messages(self):
+        """Verify multiple messages sent without pauses are preserved and decrypted."""
+        alice_queue, bob_queue = [], []
+        alice = SecureClient(alice_queue)
+        bob = SecureClient(bob_queue, inbound_role="user")
+
+        t_alice = threading.Thread(
+            target=alice.connect,
+            kwargs={"port": self.port, "role": "Alice (Initiator)", "max_retries": 3},
+            daemon=True,
+        )
+        t_bob = threading.Thread(
+            target=bob.connect,
+            kwargs={"port": self.port, "role": "Bob (Responder)", "max_retries": 3},
+            daemon=True,
+        )
+        t_alice.start()
+        time.sleep(0.05)
+        t_bob.start()
+        t_alice.join(timeout=4)
+        t_bob.join(timeout=4)
+
+        # Send 5 messages in immediate succession
+        for i in range(5):
+            alice.send_message(f"Rapid Packet #{i}")
+
+        time.sleep(0.4)
+
+        user_messages = [m["content"] for m in bob_queue if m.get("role") == "user"]
+        self.assertEqual(len(user_messages), 5)
+        for i in range(5):
+            self.assertEqual(user_messages[i], f"Rapid Packet #{i}")
+
+        # Ensure no tamper alarms were falsely triggered
+        tamper_alarms = [m for m in bob_queue if "Tamper detected" in m.get("content", "")]
+        self.assertEqual(len(tamper_alarms), 0)
+
+        alice.close()
+        bob.close()
+
+    def test_large_message_payload(self):
+        """Verify messages larger than socket buffer size (64KB) are reassembled accurately."""
+        alice_queue, bob_queue = [], []
+        alice = SecureClient(alice_queue)
+        bob = SecureClient(bob_queue, inbound_role="user")
+
+        t_alice = threading.Thread(
+            target=alice.connect,
+            kwargs={"port": self.port, "role": "Alice (Initiator)", "max_retries": 3},
+            daemon=True,
+        )
+        t_bob = threading.Thread(
+            target=bob.connect,
+            kwargs={"port": self.port, "role": "Bob (Responder)", "max_retries": 3},
+            daemon=True,
+        )
+        t_alice.start()
+        time.sleep(0.05)
+        t_bob.start()
+        t_alice.join(timeout=4)
+        t_bob.join(timeout=4)
+
+        large_text = "ARMADILLO-SECURE-PAYLOAD-" * 2500  # ~62.5 KB
+        alice.send_message(large_text)
+        time.sleep(0.5)
+
+        user_messages = [m["content"] for m in bob_queue if m.get("role") == "user"]
+        self.assertEqual(len(user_messages), 1)
+        self.assertEqual(user_messages[0], large_text)
+
+        alice.close()
+        bob.close()
+
+    def test_network_tamper_resilience(self):
+        """Verify corrupted network packets alert without permanently destroying connection."""
+        alice_queue, bob_queue = [], []
+        bob_activity = []
+        alice = SecureClient(alice_queue)
+        bob = SecureClient(bob_queue, activity_queue=bob_activity, inbound_role="user")
+
+        t_alice = threading.Thread(
+            target=alice.connect,
+            kwargs={"port": self.port, "role": "Alice (Initiator)", "max_retries": 3},
+            daemon=True,
+        )
+        t_bob = threading.Thread(
+            target=bob.connect,
+            kwargs={"port": self.port, "role": "Bob (Responder)", "max_retries": 3},
+            daemon=True,
+        )
+        t_alice.start()
+        time.sleep(0.05)
+        t_bob.start()
+        t_alice.join(timeout=4)
+        t_bob.join(timeout=4)
+
+        # 1. Send valid message
+        alice.send_message("Pre-tamper message")
+        time.sleep(0.2)
+
+        # 2. Inject corrupted framed packet directly through Alice's connection
+        corrupted_payload = os.urandom(48)
+        framed_bad = struct.pack(">I", len(corrupted_payload)) + corrupted_payload
+        alice.conn.sendall(framed_bad)
+        time.sleep(0.2)
+
+        # 3. Send valid message after corruption
+        alice.send_message("Post-tamper message")
+        time.sleep(0.3)
+
+        # Confirm both valid messages were decoded
+        user_messages = [m["content"] for m in bob_queue if m.get("role") == "user"]
+        self.assertEqual(user_messages, ["Pre-tamper message", "Post-tamper message"])
+
+        # Confirm tamper event was logged in queue and telemetry
+        system_warnings = [m["content"] for m in bob_queue if "Tamper detected" in m.get("content", "")]
+        self.assertTrue(len(system_warnings) >= 1)
+
+        tamper_events = [e for e in bob_activity if e.get("kind") == "tamper_alert"]
+        self.assertTrue(len(tamper_events) >= 1)
 
         alice.close()
         bob.close()

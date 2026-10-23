@@ -227,7 +227,7 @@ Navigate your browser to `http://localhost:8501`, click **Launch Secure Terminal
 
 ## 10. Running Automated Tests
 
-Project Armadillo includes 13 comprehensive unit tests verifying the cryptographic primitives, network relaying, and responder agents:
+Project Armadillo includes 16 comprehensive unit tests verifying cryptographic primitives, TCP streaming reassembly, network relaying, and responder agents:
 
 ```bash
 # Using Make:
@@ -243,6 +243,9 @@ python3 -m unittest discover -s tests -p "test_*.py" -v
 ### Test Coverage Highlights
 - ✅ **`test_direct_crypto_primitives`**: Verifies X25519, ML-KEM-768 encapsulation/decapsulation, and HKDF-SHA256 secret mixing.
 - ✅ **`test_tamper_detection`**: Simulates bit-flipping on ciphertexts and nonces, confirming AES-GCM tag verification failure.
+- ✅ **`test_rapid_successive_messages`**: Confirms that rapid back-to-back messaging without pauses maintains framing boundaries and decrypts without corruption.
+- ✅ **`test_large_message_payload`**: Validates deterministic reassembly and decryption of messages exceeding TCP socket buffer sizes (>60 KB).
+- ✅ **`test_network_tamper_resilience`**: Verifies that network tampering alerts the receiver without terminating the persistent connection.
 - ✅ **`test_buffering_for_subsequent_peer`**: Confirms that initial handshakes sent before peer arrival are buffered and delivered without race conditions.
 - ✅ **`test_hybrid_handshake_and_secure_messaging`**: Full end-to-end socket handshake and bidirectional encrypted messaging.
 - ✅ **`test_generate_response_offline_fallback`**: Verifies Bob handles offline Ollama daemons without unhandled exceptions.

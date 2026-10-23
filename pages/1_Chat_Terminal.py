@@ -30,6 +30,7 @@ def initialize_client() -> None:
     try:
         client.connect(RELAY_PORT, role="Alice (Initiator)", host=RELAY_HOST, max_retries=1)
     except OSError as error:
+        client.close()
         st.session_state.connection_error = str(error)
         return
 
@@ -182,11 +183,25 @@ with st.sidebar:
         st.caption("Derived hybrid session key fingerprint")
         st.code(key_data, language="text")
         st.caption("The relay forwards ciphertext; this endpoint owns decryption.")
+        if st.button("Reconnect session", icon=":material/sync:"):
+            try:
+                client.close()
+            except Exception:
+                pass
+            if "client" in st.session_state:
+                del st.session_state["client"]
+            initialize_client()
+            st.rerun()
     else:
         st.badge("Relay unavailable", color="red", icon=":material/cloud_off:")
         error = st.session_state.get("connection_error")
         if error:
             st.caption(f"Could not connect to 127.0.0.1:{RELAY_PORT}: {error}")
+        if st.button("Retry connection", icon=":material/refresh:"):
+            if "client" in st.session_state:
+                del st.session_state["client"]
+            initialize_client()
+            st.rerun()
 
     if st.button("Clear conversation", icon=":material/delete_sweep:"):
         st.session_state.message_queue.clear()

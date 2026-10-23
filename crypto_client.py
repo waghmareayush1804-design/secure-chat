@@ -1,21 +1,34 @@
+import hashlib
+import os
 import socket
+import struct
 import threading
 import time
-import os
-import hashlib
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import mlkem
-from cryptography.hazmat.primitives.asymmetric import x25519
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import mlkem, x25519
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+ALICE_HANDSHAKE_LEN = 1216  # 32B X25519 pubkey + 1184B ML-KEM-768 pubkey
+BOB_HANDSHAKE_LEN = 1120    # 32B X25519 pubkey + 1088B ML-KEM-768 ciphertext
+MAX_PACKET_SIZE = 16 * 1024 * 1024  # 16 MB maximum message payload guard
+
 
 class SecureClient:
-    def __init__(self, message_queue, activity_queue=None, inbound_role="assistant", responder=None):
+    def __init__(
+        self,
+        message_queue,
+        activity_queue=None,
+        inbound_role="assistant",
+        responder=None,
+        break_on_tamper=False,
+    ):
         self.message_queue = message_queue
         self.activity_queue = activity_queue if activity_queue is not None else []
         self.inbound_role = inbound_role
         self.responder = responder
+        self.break_on_tamper = break_on_tamper
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.aes_key = None
 
@@ -29,7 +42,7 @@ class SecureClient:
         if data is not None:
             event["data"] = data
         self.activity_queue.append(event)
-        
+
     def close(self):
         """Cleanly close the client connection."""
         try:
@@ -38,6 +51,19 @@ class SecureClient:
             pass
         finally:
             self.conn.close()
+
+    def _recv_exact(self, num_bytes: int) -> bytes:
+        """Read exactly num_bytes from the TCP socket stream.
+
+        Raises ConnectionError if the socket is closed before all bytes arrive.
+        """
+        buf = bytearray()
+        while len(buf) < num_bytes:
+            chunk = self.conn.recv(num_bytes - len(buf))
+            if not chunk:
+                raise ConnectionError("Connection closed before payload was fully received")
+            buf.extend(chunk)
+        return bytes(buf)
 
     def connect(self, port=5000, role="Alice (Initiator)", host="127.0.0.1", max_retries=None, retry_delay=1.0):
         attempts = 0
@@ -53,13 +79,13 @@ class SecureClient:
                 time.sleep(retry_delay)
 
         self.message_queue.append({"role": "system", "content": "🟢 Connected to Zero-Knowledge Server."})
-        
+
         self._perform_handshake(role)
         threading.Thread(target=self._receive_loop, daemon=True).start()
 
     def _perform_handshake(self, role):
         self.message_queue.append({"role": "system", "content": f"🔄 Initiating Hybrid Key Exchange as {role}..."})
-        
+
         if role == "Alice (Initiator)":
             # 1. Generate Classical + Quantum Keys
             alice_x25519_priv = x25519.X25519PrivateKey.generate()
@@ -69,37 +95,37 @@ class SecureClient:
                 serialization.Encoding.Raw,
                 serialization.PublicFormat.Raw,
             )
-            
-            # 2. Send both public keys to Bob
+
+            # 2. Send both public keys to Bob (1216 bytes)
             self.conn.sendall(alice_x25519_pub + alice_mlkem_pub)
-            
-            # 3. Wait for Bob's response (Classical PubKey + Quantum Ciphertext)
-            response = self.conn.recv(2048)
+
+            # 3. Wait for Bob's response (Classical PubKey + Quantum Ciphertext = 1120 bytes)
+            response = self._recv_exact(BOB_HANDSHAKE_LEN)
             bob_x25519_pub_bytes = response[:32]
             mlkem_ciphertext = response[32:]
-            
+
             # 4. Decapsulate / Derive the secrets
             bob_x25519_pub = x25519.X25519PublicKey.from_public_bytes(bob_x25519_pub_bytes)
             classical_secret = alice_x25519_priv.exchange(bob_x25519_pub)
             pq_secret = alice_mlkem_priv.decapsulate(mlkem_ciphertext)
-            
+
         else:
-            # 1. Bob waits for Alice's public keys
-            data = self.conn.recv(2048)
+            # 1. Bob waits for Alice's public keys (1216 bytes)
+            data = self._recv_exact(ALICE_HANDSHAKE_LEN)
             alice_x25519_pub_bytes = data[:32]
             alice_mlkem_pub_bytes = data[32:]
-            
+
             # 2. Bob generates his Classical Keys
             bob_x25519_priv = x25519.X25519PrivateKey.generate()
             bob_x25519_pub = bob_x25519_priv.public_key().public_bytes_raw()
-            
+
             # 3. Bob encapsulates a quantum secret using Alice's public key
             alice_mlkem_pub = mlkem.MLKEM768PublicKey.from_public_bytes(alice_mlkem_pub_bytes)
             (pq_secret, mlkem_ciphertext) = alice_mlkem_pub.encapsulate()
-            
-            # 4. Bob sends his public key and the ciphertext back
+
+            # 4. Bob sends his public key and the ciphertext back (1120 bytes)
             self.conn.sendall(bob_x25519_pub + mlkem_ciphertext)
-            
+
             # 5. Bob derives the classical secret
             alice_x25519_pub = x25519.X25519PublicKey.from_public_bytes(alice_x25519_pub_bytes)
             classical_secret = bob_x25519_priv.exchange(alice_x25519_pub)
@@ -134,8 +160,8 @@ class SecureClient:
                 "key_fingerprint": hashlib.sha256(self.aes_key).hexdigest()[:16],
             },
         )
-        
-        self.message_queue.append({"role": "system", "content": f"✅ Quantum-Safe AES-256-GCM Key Established!"})
+
+        self.message_queue.append({"role": "system", "content": "✅ Quantum-Safe AES-256-GCM Key Established!"})
 
     def encrypt_and_send(self, plaintext: str):
         self._record_activity(
@@ -172,7 +198,9 @@ class SecureClient:
                 "ciphertext_bytes": len(ciphertext),
             },
         )
-        self.conn.sendall(packet)
+        # Prefix wire packet with 4-byte big-endian length for TCP stream reassembly
+        framed_packet = struct.pack(">I", len(packet)) + packet
+        self.conn.sendall(framed_packet)
         self._record_activity(
             "Encrypted packet forwarded",
             "The router can forward bytes but cannot read this message",
@@ -186,12 +214,16 @@ class SecureClient:
     def _receive_loop(self):
         while True:
             try:
-                data = self.conn.recv(4096)
-                if not data:
-                    self.message_queue.append({"role": "system", "content": "ℹ️ Relay connection closed."})
-                    break
-            except OSError:
-                self.message_queue.append({"role": "system", "content": "ℹ️ Relay disconnected."})
+                header = self._recv_exact(4)
+                (length,) = struct.unpack(">I", header)
+                if length > MAX_PACKET_SIZE:
+                    raise ValueError(f"Packet length {length} exceeds maximum safety limit")
+                data = self._recv_exact(length)
+            except (ConnectionError, OSError):
+                self.message_queue.append({"role": "system", "content": "ℹ️ Relay connection closed."})
+                break
+            except Exception as exc:
+                self.message_queue.append({"role": "system", "content": f"⚠️ Framing error: {exc}"})
                 break
 
             try:
@@ -200,7 +232,7 @@ class SecureClient:
                     f"{len(data)} bytes received from the router",
                     "inbound",
                     data={
-                        "nonce": data[:12].hex(),
+                        "nonce": data[:12].hex() if len(data) >= 12 else "",
                         "ciphertext": data[12:-16].hex() if len(data) >= 28 else data[12:].hex(),
                         "authentication_tag": data[-16:].hex() if len(data) >= 28 else "",
                     },
@@ -240,6 +272,17 @@ class SecureClient:
                         data={"text": response_text},
                     )
                     self.encrypt_and_send(response_text)
-            except Exception:
+            except Exception as exc:
                 self.message_queue.append({"role": "system", "content": "⚠️ Decryption failed (Tamper detected)."})
-                break
+                self._record_activity(
+                    "Decryption failed (Tamper detected)",
+                    f"Authentication tag verification failed: {exc}",
+                    "inbound",
+                    kind="tamper_alert",
+                    data={
+                        "packet_length": len(data),
+                        "nonce": data[:12].hex() if len(data) >= 12 else "",
+                    },
+                )
+                if self.break_on_tamper:
+                    break

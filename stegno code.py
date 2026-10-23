@@ -30,15 +30,23 @@ def modPix(pix, data):
         yield tuple(pixels[3:6])
         yield tuple(pixels[6:9])
 
+def _get_pixel_data(image: Image.Image):
+    """Retrieve pixel sequence compatible with Pillow <12 and >=12."""
+    if hasattr(image, "get_flattened_data"):
+        return image.get_flattened_data()
+    return image.getdata()
+
+
 def encode_enc(newimg, data):
     """Encodes the modified pixel data into the new image."""
     w = newimg.size[0]
     (x, y) = (0, 0)
-    
-    for pixel in modPix(newimg.getdata(), data):
+
+    for pixel in modPix(_get_pixel_data(newimg), data):
         newimg.putpixel((x, y), pixel)
         x = 0 if x == w - 1 else x + 1
         y += 1 if x == 0 else 0
+
 
 def encode_image(image: Image.Image, data: str) -> Image.Image:
     """Encodes the given text data into a copy of the provided PIL image."""
@@ -51,7 +59,7 @@ def encode_image(image: Image.Image, data: str) -> Image.Image:
 
 def decode_image(image: Image.Image) -> str:
     """Decodes hidden text from the provided PIL image."""
-    imgdata = iter(image.getdata())
+    imgdata = iter(_get_pixel_data(image))
     data = ""
     while True:
         pixels = [value for value in next(imgdata)[:3] + next(imgdata)[:3] + next(imgdata)[:3]]
