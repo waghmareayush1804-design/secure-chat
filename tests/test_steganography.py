@@ -2,6 +2,7 @@
 
 import importlib
 import unittest
+
 from PIL import Image
 
 stegno = importlib.import_module("stegno code")

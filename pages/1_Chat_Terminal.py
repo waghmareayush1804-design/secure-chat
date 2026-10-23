@@ -1,7 +1,6 @@
 """Streamlit frontend for Alice's encrypted relay client."""
 
 import hashlib
-
 import os
 
 import streamlit as st

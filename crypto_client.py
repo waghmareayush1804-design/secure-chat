@@ -74,7 +74,9 @@ class SecureClient:
             except ConnectionRefusedError:
                 attempts += 1
                 if max_retries is not None and attempts >= max_retries:
-                    raise ConnectionRefusedError(f"Could not connect to {host}:{port} after {attempts} attempts")
+                    raise ConnectionRefusedError(
+                        f"Could not connect to {host}:{port} after {attempts} attempts"
+                    ) from None
                 print(f"[{role}] Server offline. Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
 

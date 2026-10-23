@@ -4,8 +4,9 @@ import logging
 import os
 import time
 
-from crypto_client import SecureClient
 from langchain_ollama import OllamaLLM
+
+from crypto_client import SecureClient
 
 LOGGER = logging.getLogger(__name__)
 

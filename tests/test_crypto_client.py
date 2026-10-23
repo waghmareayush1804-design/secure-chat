@@ -5,13 +5,14 @@ import threading
 import time
 import unittest
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import mlkem, x25519
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from crypto_client import SecureClient
 import server
+from crypto_client import SecureClient
 
 
 class TestCryptoPrimitives(unittest.TestCase):
@@ -75,14 +76,14 @@ class TestCryptoPrimitives(unittest.TestCase):
         corrupted_ciphertext[0] ^= 0x01
         corrupted_ciphertext = bytes(corrupted_ciphertext)
 
-        # Decrypting corrupted ciphertext must raise exception
-        with self.assertRaises(Exception):
+        # Decrypting corrupted ciphertext must raise InvalidTag
+        with self.assertRaises(InvalidTag):
             aesgcm.decrypt(nonce, corrupted_ciphertext, None)
 
-        # Corrupted nonce must raise exception
+        # Corrupted nonce must raise InvalidTag
         corrupted_nonce = bytearray(nonce)
         corrupted_nonce[0] ^= 0x01
-        with self.assertRaises(Exception):
+        with self.assertRaises(InvalidTag):
             aesgcm.decrypt(bytes(corrupted_nonce), ciphertext, None)
 
         alice.close()

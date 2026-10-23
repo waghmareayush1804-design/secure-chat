@@ -1,5 +1,6 @@
 from PIL import Image
 
+
 def genData(data):
     """Converts input text into a list of 8-bit binary strings."""
     return [format(ord(i), '08b') for i in data]
@@ -9,23 +10,23 @@ def modPix(pix, data):
     datalist = genData(data)
     lendata = len(datalist)
     imdata = iter(pix)
-    
+
     for i in range(lendata):
-        pixels = [value for value in next(imdata)[:3] + next(imdata)[:3] + next(imdata)[:3]]
-        
+        pixels = list(next(imdata)[:3] + next(imdata)[:3] + next(imdata)[:3])
+
         # Modify pixel values based on binary data
         for j in range(8):
             if datalist[i][j] == '0' and pixels[j] % 2 != 0:
                 pixels[j] -= 1
             elif datalist[i][j] == '1' and pixels[j] % 2 == 0:
                 pixels[j] = pixels[j] - 1 if pixels[j] != 0 else pixels[j] + 1
-        
+
         # Set termination flag (last pixel even means continue, odd means stop)
         if i == lendata - 1:
             pixels[-1] |= 1  # Make odd (stop flag)
         else:
             pixels[-1] &= ~1  # Make even (continue flag)
-        
+
         yield tuple(pixels[:3])
         yield tuple(pixels[3:6])
         yield tuple(pixels[6:9])
@@ -62,7 +63,7 @@ def decode_image(image: Image.Image) -> str:
     imgdata = iter(_get_pixel_data(image))
     data = ""
     while True:
-        pixels = [value for value in next(imgdata)[:3] + next(imgdata)[:3] + next(imgdata)[:3]]
+        pixels = list(next(imgdata)[:3] + next(imgdata)[:3] + next(imgdata)[:3])
         binstr = ''.join(['1' if i % 2 else '0' for i in pixels[:8]])
         data += chr(int(binstr, 2))
         if pixels[-1] % 2 != 0:

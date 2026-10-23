@@ -43,7 +43,7 @@ st.markdown(
         pointer-events: none;
         z-index: 0;
         opacity: 0.05;
-        background-image: 
+        background-image:
             linear-gradient(to right, #00e5ff 1px, transparent 1px),
             linear-gradient(to bottom, #00e5ff 1px, transparent 1px);
         background-size: 60px 60px;
@@ -152,9 +152,9 @@ st.warning(
     """
     ⚠️ **The Threat Model: Harvest Now, Decrypt Later (HNDL)**
 
-    Adversaries and hostile intelligence entities are actively capturing, archiving, and indexing 
-    encrypted communications traffic today. While currently protected by classical algorithms, these stored 
-    data stores will be decrypted retroactively once Cryptographically Relevant Quantum Computers (CRQCs) 
+    Adversaries and hostile intelligence entities are actively capturing, archiving, and indexing
+    encrypted communications traffic today. While currently protected by classical algorithms, these stored
+    data stores will be decrypted retroactively once Cryptographically Relevant Quantum Computers (CRQCs)
     mature and execute **Shor's Algorithm** to factor discrete logarithms and prime moduli in polynomial time.
     """
 )
@@ -189,7 +189,7 @@ with col_dept:
         st.info(
             """
             ### 🔑 Classical Layer
-            **X25519**  
+            **X25519**<br/>
             *Standard ECDH*
             """
         )
@@ -204,7 +204,7 @@ with col_dept:
         st.success(
             """
             ### 🛡️ Quantum Layer
-            **ML-KEM-768**  
+            **ML-KEM-768**<br/>
             *NIST FIPS 203 Standard*
             """
         )
@@ -219,7 +219,7 @@ with col_dept:
         st.error(
             """
             ### 🔒 Tunneling
-            **AES-256-GCM**  
+            **AES-256-GCM**<br/>
             *Authenticated Encryption*
             """
         )
@@ -234,7 +234,7 @@ with col_dept:
         st.warning(
             """
             ### 🧠 Sovereign AI
-            **Local Llama-3**  
+            **Local Llama-3**<br/>
             *Air-Gapped, Zero-Telemetry Inference*
             """
         )

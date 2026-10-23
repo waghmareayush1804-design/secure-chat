@@ -5,7 +5,6 @@ import os
 import socket
 import threading
 
-
 HOST = os.environ.get("RELAY_HOST", "127.0.0.1")
 PORT = int(os.environ.get("RELAY_PORT", "5000"))
 BUFFER_SIZE = 65536
@@ -126,7 +125,7 @@ def run_server(
             while stop_event is None or not stop_event.is_set():
                 try:
                     client_socket, address = server_socket.accept()
-                except socket.timeout:
+                except TimeoutError:
                     continue
 
                 with clients_lock:
