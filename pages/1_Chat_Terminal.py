@@ -2,12 +2,16 @@
 
 import hashlib
 
+import os
+
 import streamlit as st
 
 from crypto_client import SecureClient
 
+st.set_page_config(page_title="E2EE Secure Chat", page_icon=":material/lock:")
 
-RELAY_PORT = 5000
+RELAY_PORT = int(os.environ.get("RELAY_PORT", "5000"))
+RELAY_HOST = os.environ.get("RELAY_HOST", "127.0.0.1")
 POLL_INTERVAL = "500ms"
 
 
@@ -24,7 +28,7 @@ def initialize_client() -> None:
     )
 
     try:
-        client.connect(RELAY_PORT, role="Alice (Initiator)")
+        client.connect(RELAY_PORT, role="Alice (Initiator)", host=RELAY_HOST, max_retries=1)
     except OSError as error:
         st.session_state.connection_error = str(error)
         return
@@ -163,7 +167,6 @@ def render_chat() -> None:
         st.rerun()
 
 
-st.set_page_config(page_title="E2EE Secure Chat", page_icon=":material/lock:")
 initialize_client()
 
 with st.sidebar:

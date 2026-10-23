@@ -1,4 +1,47 @@
+# Python virtual environments & bytecode
 .venv/
+venv/
+ENV/
+env/
 __pycache__/
-.agents/
+*.py[cod]
+*$py.class
+*.so
+
+# IDEs and local editor settings
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+.agents/
+
+# Testing and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Distribution and packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environment files and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# Operating System metadata
+.DS_Store
+Thumbs.db
+
+# Application logs and ephemeral files
+*.log
+scratch/
+tmp/

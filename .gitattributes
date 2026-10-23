@@ -1,0 +1,19 @@
+# Set default line endings to LF across OS
+* text=auto eol=lf
+
+# Explicit text files
+*.py text diff=python
+*.md text
+*.toml text
+*.yaml text
+*.yml text
+*.sh text eol=lf
+*.json text
+*.txt text
+
+# Binary formats
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.pyc binary

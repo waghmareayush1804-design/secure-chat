@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "project-armadillo"
+version = "0.1.0"
+description = "Post-Quantum Zero-Knowledge Communications using ML-KEM-768, X25519, AES-256-GCM, and Sovereign Local AI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary / All Rights Reserved" }
+authors = [
+    { name = "Ayush Nitin Waghmare", email = "ayush.waghmare.bsc2025@saii.siu.edu.in" }
+]
+keywords = [
+    "post-quantum",
+    "cryptography",
+    "zero-knowledge",
+    "ml-kem-768",
+    "x25519",
+    "aes-gcm",
+    "fips-203",
+    "streamlit",
+    "ollama",
+    "privacy"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Communications :: Chat",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "cryptography>=43.0.0",
+    "streamlit>=1.35.0",
+    "langchain-ollama>=0.1.0",
+    "pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.0",
+    "black>=24.0.0",
+    "mypy>=1.10.0",
+]
+
+[project.scripts]
+armadillo-relay = "server:main"
+armadillo-bob = "bob_ai:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312", "py313"]

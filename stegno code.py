@@ -40,36 +40,43 @@ def encode_enc(newimg, data):
         x = 0 if x == w - 1 else x + 1
         y += 1 if x == 0 else 0
 
+def encode_image(image: Image.Image, data: str) -> Image.Image:
+    """Encodes the given text data into a copy of the provided PIL image."""
+    if not data:
+        raise ValueError("Data is empty")
+    newimg = image.copy()
+    encode_enc(newimg, data)
+    return newimg
+
+
+def decode_image(image: Image.Image) -> str:
+    """Decodes hidden text from the provided PIL image."""
+    imgdata = iter(image.getdata())
+    data = ""
+    while True:
+        pixels = [value for value in next(imgdata)[:3] + next(imgdata)[:3] + next(imgdata)[:3]]
+        binstr = ''.join(['1' if i % 2 else '0' for i in pixels[:8]])
+        data += chr(int(binstr, 2))
+        if pixels[-1] % 2 != 0:
+            break
+    return data
+
+
 def encode():
     """Handles user input and calls encoding functions."""
     img = input("Enter image name (with extension): ")
     image = Image.open(img, 'r')
     data = input("Enter data to be encoded: ")
-    
-    if not data:
-        raise ValueError("Data is empty")
-    
-    newimg = image.copy()
-    encode_enc(newimg, data)
+    newimg = encode_image(image, data)
     new_img_name = input("Enter the name of new image (with extension): ")
     newimg.save(new_img_name, new_img_name.split(".")[-1].upper())
+
 
 def decode():
     """Decodes hidden text from an image."""
     img = input("Enter image name (with extension): ")
     image = Image.open(img, 'r')
-    imgdata = iter(image.getdata())
-    data = ""
-    
-    while True:
-        pixels = [value for value in next(imgdata)[:3] + next(imgdata)[:3] + next(imgdata)[:3]]
-        binstr = ''.join(['1' if i % 2 else '0' for i in pixels[:8]])
-        data += chr(int(binstr, 2))
-        
-        if pixels[-1] % 2 != 0:
-            break
-    
-    return data
+    return decode_image(image)
 
 def main():
     """Main function for user interaction."""

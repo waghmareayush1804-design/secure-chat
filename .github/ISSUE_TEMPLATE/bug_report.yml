@@ -1,0 +1,40 @@
+name: Bug Report
+description: Create a report to help us improve Project Armadillo
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a bug! Please fill out the sections below.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Start relay server with 'python server.py'
+        2. Launch client...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version, OS, cryptography version, etc.
+      placeholder: "Python 3.12, Linux 6.x, cryptography 43.0.0"
+    validations:
+      required: false

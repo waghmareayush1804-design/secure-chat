@@ -30,14 +30,27 @@ class SecureClient:
             event["data"] = data
         self.activity_queue.append(event)
         
-    def connect(self, port, role):
+    def close(self):
+        """Cleanly close the client connection."""
+        try:
+            self.conn.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        finally:
+            self.conn.close()
+
+    def connect(self, port=5000, role="Alice (Initiator)", host="127.0.0.1", max_retries=None, retry_delay=1.0):
+        attempts = 0
         while True:
             try:
-                self.conn.connect(('127.0.0.1', port))
+                self.conn.connect((host, port))
                 break
             except ConnectionRefusedError:
-                print(f"[{role}] Server offline. Retrying in 3 seconds...")
-                time.sleep(3)
+                attempts += 1
+                if max_retries is not None and attempts >= max_retries:
+                    raise ConnectionRefusedError(f"Could not connect to {host}:{port} after {attempts} attempts")
+                print(f"[{role}] Server offline. Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
 
         self.message_queue.append({"role": "system", "content": "🟢 Connected to Zero-Knowledge Server."})
         
@@ -174,15 +187,22 @@ class SecureClient:
         while True:
             try:
                 data = self.conn.recv(4096)
-                if not data: break
+                if not data:
+                    self.message_queue.append({"role": "system", "content": "ℹ️ Relay connection closed."})
+                    break
+            except OSError:
+                self.message_queue.append({"role": "system", "content": "ℹ️ Relay disconnected."})
+                break
+
+            try:
                 self._record_activity(
                     "Encrypted packet received",
                     f"{len(data)} bytes received from the router",
                     "inbound",
                     data={
                         "nonce": data[:12].hex(),
-                        "ciphertext": data[12:-16].hex(),
-                        "authentication_tag": data[-16:].hex(),
+                        "ciphertext": data[12:-16].hex() if len(data) >= 28 else data[12:].hex(),
+                        "authentication_tag": data[-16:].hex() if len(data) >= 28 else "",
                     },
                 )
                 nonce, ciphertext = data[:12], data[12:]
@@ -221,5 +241,5 @@ class SecureClient:
                     )
                     self.encrypt_and_send(response_text)
             except Exception:
-                self.message_queue.append({"role": "system", "content": f"⚠️ Decryption failed (Tamper detected)."})
+                self.message_queue.append({"role": "system", "content": "⚠️ Decryption failed (Tamper detected)."})
                 break
