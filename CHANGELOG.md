@@ -32,3 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unused imports (`socket` in `bob_agent.py`, `hashlib` in `tests/test_crypto_client.py`) to ensure CI linter (`ruff check .`) passes cleanly.
 - Resolved Pillow 12+ `DeprecationWarning` in `stegno code.py` by introducing `_get_pixel_data()` compatibility shim.
 - Expanded automated test suite from 13 to 16 tests with multi-packet rapid streaming, 64KB payload reassembly, and network tamper resilience tests.
+- Replaced non-portable `file:///` machine-local links in `docs/architecture.md`, `docs/development.md`, and `docs/troubleshooting.md` with standard relative Markdown repository paths.
+- Synchronized cryptography dependency constraint to `>=44.0.0` across README, requirements, and pyproject.toml to match ML-KEM-768 FIPS 203 support.
+

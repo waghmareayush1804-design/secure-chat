@@ -57,6 +57,6 @@ $$\text{Shared Secret} = \text{HKDF-Extract}(\text{Secret}_{\text{X25519}} \math
 | Attack Vector | Adversary Capability | Armadillo Defense Mechanism |
 |---|---|---|
 | **Eavesdropping on Relay** | Adversary captures all bytes passing through `server.py`. | **Immune:** Only opaque ciphertext with random nonces is routed; key exchange is encrypted/encapsulated. |
-| **Tampering / Packet Modification** | Router modifies bytes in flight or injects data. | **Detected:** AES-GCM 128-bit tag fails authentication; client immediately drops connection and logs tamper alert. |
+| **Tampering / Packet Modification** | Router modifies bytes in flight or injects data. | **Detected:** AES-GCM 128-bit tag fails authentication; client rejects corrupt payload, logs tamper alert, and preserves socket loop. |
 | **Harvest Now, Decrypt Later** | Adversary records session for 20 years to decrypt with CRQC. | **Protected:** ML-KEM-768 lattice secret protects the derived AES key from Shor's algorithm. |
 | **Cloud Prompt Leakage** | Corporate AI model transmits chat logs to cloud providers. | **Eliminated:** Local Ollama model runs strictly on `127.0.0.1` with no WAN network telemetry. |

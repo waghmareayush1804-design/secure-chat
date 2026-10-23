@@ -25,10 +25,10 @@ test:
 
 lint:
 	$(PYTHON) -m py_compile Home.py pages/1_Chat_Terminal.py crypto_client.py server.py bob_agent.py bob_ai.py "stegno code.py"
-	@if command -v ruff >/dev/null 2>&1; then ruff check .; else echo "ruff not found, syntax compilation verified."; fi
+	@if [ -x .venv/bin/ruff ]; then .venv/bin/ruff check .; elif command -v ruff >/dev/null 2>&1; then ruff check .; else echo "ruff not found, syntax compilation verified."; fi
 
 format:
-	@if command -v ruff >/dev/null 2>&1; then ruff format .; elif command -v black >/dev/null 2>&1; then black .; else echo "No formatter installed."; fi
+	@if [ -x .venv/bin/ruff ]; then .venv/bin/ruff format .; elif command -v ruff >/dev/null 2>&1; then ruff format .; elif command -v black >/dev/null 2>&1; then black .; else echo "No formatter installed."; fi
 
 run-relay:
 	./scripts/run_relay.sh

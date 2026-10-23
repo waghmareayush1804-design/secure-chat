@@ -83,7 +83,7 @@ For the mathematical threat model and quantum resistance analysis, see [docs/thr
 ## 5. Technology Stack
 
 - **Language:** Python 3.11+ (Tested on Python 3.11, 3.12, 3.13, 3.14)
-- **Cryptography:** [`cryptography>=43.0.0`](https://cryptography.io/) (OpenSSL 3.2+ backend with native `MLKEM768`, `X25519`, `HKDF`, `AESGCM`)
+- **Cryptography:** [`cryptography>=44.0.0`](https://cryptography.io/) (OpenSSL 3.2+ backend with native `MLKEM768`, `X25519`, `HKDF`, `AESGCM`)
 - **Frontend / Telemetry UI:** [Streamlit](https://streamlit.io/)
 - **Local AI Inference:** [LangChain Ollama](https://github.com/langchain-ai/langchain) + [Ollama](https://ollama.com/)
 - **Steganography:** [Pillow (PIL)](https://pillow.readthedocs.io/)
