@@ -39,10 +39,10 @@ pytest -v tests/
 ```
 
 ### Test Organization
-- [`tests/test_crypto_client.py`](file:///home/ayushwaghmare/secure-chat/tests/test_crypto_client.py): Verifies X25519, ML-KEM-768, HKDF derivation, AES-GCM encryption/decryption, and tamper detection.
-- [`tests/test_server.py`](file:///home/ayushwaghmare/secure-chat/tests/test_server.py): Tests TCP relay routing, asynchronous client buffering, and socket disconnect resiliency.
-- [`tests/test_bob_agent.py`](file:///home/ayushwaghmare/secure-chat/tests/test_bob_agent.py): Tests headless AI responder, fallback behavior when Ollama is offline, and retry handling.
-- [`tests/test_steganography.py`](file:///home/ayushwaghmare/secure-chat/tests/test_steganography.py): Tests bit-level LSB steganography roundtrips and input validation.
+- [`tests/test_crypto_client.py`](../tests/test_crypto_client.py): Verifies X25519, ML-KEM-768, HKDF derivation, AES-GCM encryption/decryption, and tamper detection.
+- [`tests/test_server.py`](../tests/test_server.py): Tests TCP relay routing, asynchronous client buffering, and socket disconnect resiliency.
+- [`tests/test_bob_agent.py`](../tests/test_bob_agent.py): Tests headless AI responder, fallback behavior when Ollama is offline, and retry handling.
+- [`tests/test_steganography.py`](../tests/test_steganography.py): Tests bit-level LSB steganography roundtrips and input validation.
 
 ---
 
@@ -67,6 +67,6 @@ make format
    - Bob Public Handshake: `32 bytes (X25519) + 1088 bytes (ML-KEM-768 Ciphertext) = 1120 bytes`.
    - Data Packets: `12 bytes (Nonce) + N bytes (Ciphertext) + 16 bytes (Auth Tag)`.
 2. **Zero-Knowledge Principle:**
-   - Never inspect or parse plaintext inside [`server.py`](file:///home/ayushwaghmare/secure-chat/server.py). The relay must remain an opaque byte transport.
+   - Never inspect or parse plaintext inside [`server.py`](../server.py). The relay must remain an opaque byte transport.
 3. **Telemetry & Secrets:**
    - Truncated SHA-256 fingerprints may be exposed in UI telemetry (for key verification), but private keys and unhashed session keys must never be logged.

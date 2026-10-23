@@ -11,7 +11,7 @@ Streamlit displays:
 > `Could not connect to 127.0.0.1:5000: [Errno 111] Connection refused`
 
 ### Cause
-The TCP relay server ([`server.py`](file:///home/ayushwaghmare/secure-chat/server.py)) is not currently running on the specified host/port.
+The TCP relay server ([`server.py`](../server.py)) is not currently running on the specified host/port.
 
 ### Solution
 1. Open a separate terminal and start the relay:
@@ -53,7 +53,7 @@ Bob replies with:
 > `[Bob AI - llama3 (Offline)]: Received '...'. (Local Ollama daemon not reachable: [Errno 111] Connection refused)`
 
 ### Cause
-The headless Bob endpoint ([`bob_ai.py`](file:///home/ayushwaghmare/secure-chat/bob_ai.py)) is running, but the local [Ollama](https://ollama.com/) service is either stopped or the `llama3` model is not pulled.
+The headless Bob endpoint ([`bob_ai.py`](../bob_ai.py)) is running, but the local [Ollama](https://ollama.com/) service is either stopped or the `llama3` model is not pulled.
 
 ### Solution
 1. Start the Ollama server:

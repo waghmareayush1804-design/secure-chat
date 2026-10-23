@@ -87,8 +87,8 @@ Every application payload transmitted across the relay is framed with a 4-byte b
 
 | Component | File | Responsibilities |
 |---|---|---|
-| **Streamlit UI** | [`Home.py`](file:///home/ayushwaghmare/secure-chat/Home.py), [`pages/1_Chat_Terminal.py`](file:///home/ayushwaghmare/secure-chat/pages/1_Chat_Terminal.py) | Human operator interface, cryptographic session telemetry display, real-time message exchange, connection state indicator. |
-| **Crypto Client** | [`crypto_client.py`](file:///home/ayushwaghmare/secure-chat/crypto_client.py) | Key pair generation, encapsulation/decapsulation, HKDF extraction, AES-GCM encryption/decryption, background socket receive thread. |
-| **Blind TCP Relay** | [`server.py`](file:///home/ayushwaghmare/secure-chat/server.py) | Stateless/opaque packet routing, connection isolation, unrouted handshake queueing for asynchronous peer arrival. |
-| **Headless AI Responder** | [`bob_ai.py`](file:///home/ayushwaghmare/secure-chat/bob_ai.py), [`bob_agent.py`](file:///home/ayushwaghmare/secure-chat/bob_agent.py) | Automated autonomous endpoint with local Ollama Llama-3 integration and graceful offline fallback. |
-| **LSB Steganography** | [`stegno code.py`](file:///home/ayushwaghmare/secure-chat/stegno%20code.py) | In-memory and file-based LSB image encoding and decoding for covert data storage. |
+| **Streamlit UI** | [`Home.py`](../Home.py), [`pages/1_Chat_Terminal.py`](../pages/1_Chat_Terminal.py) | Human operator interface, cryptographic session telemetry display, real-time message exchange, connection state indicator. |
+| **Crypto Client** | [`crypto_client.py`](../crypto_client.py) | Key pair generation, encapsulation/decapsulation, HKDF extraction, AES-GCM encryption/decryption, background socket receive thread. |
+| **Blind TCP Relay** | [`server.py`](../server.py) | Stateless/opaque packet routing, connection isolation, unrouted handshake queueing for asynchronous peer arrival. |
+| **Headless AI Responder** | [`bob_ai.py`](../bob_ai.py), [`bob_agent.py`](../bob_agent.py) | Automated autonomous endpoint with local Ollama Llama-3 integration and graceful offline fallback. |
+| **LSB Steganography** | [`stegno code.py`](../stegno%20code.py) | In-memory and file-based LSB image encoding and decoding for covert data storage. |
